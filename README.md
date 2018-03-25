@@ -50,7 +50,7 @@ class Chaingun:
 
 ...
 
-	def valid_chain(self, chain):
+def valid_chain(self, chain):
         last_block = chain[0]
         current_index = 1
 
@@ -80,7 +80,7 @@ Here __chain__ is the current blockchain and the __return__ variable is boolean 
 ### Network Consensus
 
 ```python
-	def resolve_conflicts(self):
+def resolve_conflicts(self):
         neighbours = self.nodes
         new_chain = None
 
@@ -116,7 +116,7 @@ We __return__ True if our chain was replaced, and False if not.
 The transaction function is next. This contains all the information for our transaction.
 
 ```python
-	def new_transaction(self, owner, receiver, amount, gun_id):
+def new_transaction(self, owner, receiver, amount, gun_id):
         self.current_transactions.append({
             'owner': owner,
             'receiver': receiver,
@@ -137,7 +137,7 @@ Creates a new transaction thats queued for the next mined Block
 The hashing function takes all of this information, orders and encodes it performing a standard SHA-256 hash on it.
 
 ```python
-	def hash(block):
+def hash(block):
         block_string = json.dumps(block, sort_keys=True).encode()
         return hashlib.sha256(block_string).hexdigest()
 ```
@@ -150,7 +150,7 @@ Simple Proof of Work Algorithm:
          
 
 ```python
-	def proof_of_work(self, last_block):
+def proof_of_work(self, last_block):
         last_proof = last_block['proof']
         last_hash = self.hash(last_block)
         proof = 0
@@ -158,8 +158,8 @@ Simple Proof of Work Algorithm:
             proof += 1
         return proof
 
-    @staticmethod
-    def valid_proof(last_proof, proof, last_hash):
+   @staticmethod
+   def valid_proof(last_proof, proof, last_hash):
         guess = f'{last_proof}{proof}{last_hash}'.encode()
         guess_hash = hashlib.sha256(guess).hexdigest()
         return guess_hash[:4] == "0000"
@@ -170,23 +170,27 @@ Simple Proof of Work Algorithm:
 Let's try out how it works! Fire up Postman and do the following.
 
 Initializing: Send a GET request to ```/mine```
-image
+<img src="https://user-images.githubusercontent.com/10093954/37879823-861c293c-304c-11e8-946b-7221d57973f8.png" alt="Drawing" style="width:100%;"/>
 
-Make a new transaction using POST and filling out the transaction details in JSON. Keep owner as the hash id of receiver in previous block ```/transactions/new```
-image
+
+Make a new transaction using POST and filling out the transaction details in JSON. Keep owner as the hash id of receiver in previous block ```/transactions/new```. Mine again. You can add transactions and play around with this.
+<img src="https://user-images.githubusercontent.com/10093954/37879822-8611d3d8-304c-11e8-8593-dadbcd8899b0.png" alt="Drawing" style="width:100%;"/>
+
 
 Check out the addition in the chain using ```/chain```
-image
+<img src="https://user-images.githubusercontent.com/10093954/37879819-85f04916-304c-11e8-8681-af039f719d66.png" alt="Drawing" style="width:100%;"/>
 
 Change port number from 5000 to 5001 and run another instance of ```chaingun.py```. Then in a POST request on your old node, register your new node. 
-image
+<img src="https://user-images.githubusercontent.com/10093954/37879818-85e62990-304c-11e8-9a14-96be1b35dcac.png" alt="Drawing" style="width:100%;"/>
+
 
 Add Some transactions to your new node
-image
+<img src="https://user-images.githubusercontent.com/10093954/37879871-71dbc918-304d-11e8-8113-b0dd450c8e32.png" alt="Drawing" style="width:100%;"/>
 
 Try merging using ```nodes/resolve``` and see what you get!
 
-image
+<img src="https://user-images.githubusercontent.com/10093954/37879817-85dc3dae-304c-11e8-96f9-e2bb891ae001.png" alt="Drawing" style="width:100%;"/>
+
 
 
 
@@ -197,16 +201,10 @@ Obviously, this is not even close to the actual complexity of a real block-chain
 ## Common Issues
 
 I found that sometimes there were other processes that were still running and occupying ports in my system.
-Run this on your CLI
-```
-ps -fA | grep python
-```
+Run this on your CLI ```ps -fA | grep python```
 This will list the processes running on the port.
 
-You can kill them by entering the process number
-```
-kill <processnumber>
-```
+You can kill them by entering the process number ```kill <processnumber>```. Run chaingun.py after that.
 
 ## Acknowledgments
 
@@ -214,7 +212,7 @@ kill <processnumber>
 
 ## License
 
-This project is licensed under the MIT License. See LICENSE.md for more information.
+This project is licensed under the MIT License. See [LICENSE.md](LICENSE.md) for more information.
 
 
 
