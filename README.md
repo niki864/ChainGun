@@ -172,21 +172,26 @@ def proof_of_work(self, last_block):
 Let's try out how it works! Fire up Postman and do the following.
 
 Initializing: Send a GET request to ```/mine```
+
 <img src="https://user-images.githubusercontent.com/10093954/37879823-861c293c-304c-11e8-946b-7221d57973f8.png" alt="Drawing" style="width:100%;"/>
 
 
 Make a new transaction using POST and filling out the transaction details in JSON. Keep owner as the hash id of receiver in previous block ```/transactions/new```. Mine again. You can add transactions and play around with this.
+
 <img src="https://user-images.githubusercontent.com/10093954/37879822-8611d3d8-304c-11e8-8593-dadbcd8899b0.png" alt="Drawing" style="width:100%;"/>
 
 
 Check out the addition in the chain using ```/chain```
+
 <img src="https://user-images.githubusercontent.com/10093954/37879819-85f04916-304c-11e8-8681-af039f719d66.png" alt="Drawing" style="width:100%;"/>
 
 Change port number from 5000 to 5001 and run another instance of ```chaingun.py```. Then in a POST request on your old node, register your new node. 
+
 <img src="https://user-images.githubusercontent.com/10093954/37879818-85e62990-304c-11e8-9a14-96be1b35dcac.png" alt="Drawing" style="width:100%;"/>
 
 
 Add Some transactions to your new node
+
 <img src="https://user-images.githubusercontent.com/10093954/37879871-71dbc918-304d-11e8-8113-b0dd450c8e32.png" alt="Drawing" style="width:100%;"/>
 
 Try merging using ```nodes/resolve``` and see what you get!
