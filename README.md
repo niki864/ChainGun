@@ -23,6 +23,8 @@ The ledger nature of a blockchain also allows for John, Jane and Acme to be simu
 
 ## Packages Required
 
+This project was done in Python3
+
 * Requests
 * Flask
 
