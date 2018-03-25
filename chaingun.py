@@ -6,10 +6,13 @@ from uuid import uuid4
 
 import requests
 from flask import Flask, jsonify, request
+
 """
 A conceptual blockchain to reinforce gun ownership and tracking of gun sales.
 The idea is to have a way to ensure that at every trasaction is tracked and accounted.
 The concept of a decentralised blockchain and ledger system to implement this seems quite intuitive.
+Gun_id listed here could correspond to the serial id of a gun.
+
 """
 
 class Chaingun:
@@ -18,13 +21,13 @@ class Chaingun:
         self.chain = []
         self.nodes = set()
 
-        # Create the genesis block
+        # Create the first block - Let there be light
         self.new_block(previous_hash='1', proof=100)
 
     def register_node(self, address):
         """
-        Add a new node to the list of nodes
-        :param address: Address of node. Eg. 'http://192.168.0.5:5000'
+        Add new node to the list of nodes
+        address: Address of node. Eg. 'http://192.168.0.5:5000'
         """
 
         parsed_url = urlparse(address)
@@ -39,9 +42,9 @@ class Chaingun:
 
     def valid_chain(self, chain):
         """
-        Determine if a given blockchain is valid
-        :param chain: A blockchain
-        :return: True if valid, False if not
+        Blockchain validation is done here
+        chain: A blockchain
+        return: True if valid, False if not
         """
 
         last_block = chain[0]
@@ -67,18 +70,19 @@ class Chaingun:
 
     def resolve_conflicts(self):
         """
-        This is our consensus algorithm, it resolves conflicts
+        This is our network consensus algorithm, it resolves conflicts
         by replacing our chain with the longest one in the network.
-        :return: True if our chain was replaced, False if not
+        Our logic here is that the longest chain is the most valid chain.
+        return: True if our chain was replaced, False if not
         """
 
         neighbours = self.nodes
         new_chain = None
 
-        # We're only looking for chains longer than ours
+        # Look only for chains longer than current
         max_length = len(self.chain)
 
-        # Grab and verify the chains from all the nodes in our network
+        # Find and verify the chains from all the nodes in network
         for node in neighbours:
             response = requests.get(f'http://{node}/chain')
 
@@ -86,7 +90,7 @@ class Chaingun:
                 length = response.json()['length']
                 chain = response.json()['chain']
 
-                # Check if the length is longer and the chain is valid
+                # Check to see if length is longer than current and the chain is valid
                 if length > max_length and self.valid_chain(chain):
                     max_length = length
                     new_chain = chain
@@ -100,10 +104,11 @@ class Chaingun:
 
     def new_block(self, proof, previous_hash):
         """
-        Create a new Block in the Blockchain
-        :param proof: The proof given by the Proof of Work algorithm
-        :param previous_hash: Hash of previous Block
-        :return: New Block
+        Create a new block in the blockchain.
+        We use the hash of the previous block as part of the immutability of the blockchain
+        proof: The proof given by the proof of work algorithm
+        previous_hash: Hash of previous block
+        return: New Block
         """
 
         block = {
@@ -122,19 +127,24 @@ class Chaingun:
 
     def new_transaction(self, owner, receiver, amount, gun_id):
         """
-        Creates a new transaction to go into the next mined Block
-        :param owner: <str> ID of the current gun owner
-        :param receiver: <str> ID of the receiver 
-        :param amount: <int> Amount
-        :param gun_id: <int> Unique gun id for the gun that's being transacted
-        :return: <int> The index of the Block that will hold this transaction
+        Creates a new transaction thats queued for the next mined Block
+        owner: ID of the current gun owner
+        receiver: ID of the buyer 
+        amount: Amount paid in the transaction
+        gun_id: Unique gun id for the gun that's being transacted
+        return: The index of the Block that will hold this transaction
         """
         self.current_transactions.append({
             'owner': owner,
             'receiver': receiver,
             'amount': amount,
             'gun_id':gun_id
+            
         })
+        """
+        You can include a validation function here <optional>.
+        The goal of such a function would be to check against a database to see if it's a valid gun serial ID.
+        """
 
         return self.last_block['index'] + 1
     
@@ -146,13 +156,18 @@ class Chaingun:
     def hash(block):
         """
         Every block in the network needs a signature -> Reinforces uniqueness and immutability
-        We can do that by hashing a unique id with SHA-256 hash.
+        We can do that by hashing our block dictionary with SHA-256 hash.
         Creates a SHA-256 hash of a Block
-        :param block: <dict> Block
-        :return: <str>
+        block: block dictionary
+        return: hashed string
+        """
+        
+        """
+        The entire dictionary will be hashed.
+        We must make sure that the information in the Dictionary is ordered, 
+        or we'll have inconsistent hashes across different transactions.
         """
 
-        # We must make sure that the Dictionary is Ordered, or we'll have inconsistent hashes
         block_string = json.dumps(block, sort_keys=True).encode()
         return hashlib.sha256(block_string).hexdigest()
 
@@ -162,8 +177,8 @@ class Chaingun:
          - Find a number p' such that hash(pp') contains leading 4 zeroes
          - Where p is the previous proof, and p' is the new proof
          
-        :param last_block: <dict> last Block
-        :return: <int>
+        last_block: last Block
+        return: proof as an integer number
         """
 
         last_proof = last_block['proof']
@@ -179,10 +194,10 @@ class Chaingun:
     def valid_proof(last_proof, proof, last_hash):
         """
         Validates the Proof
-        :param last_proof: <int> Previous Proof
-        :param proof: <int> Current Proof
-        :param last_hash: <str> The hash of the Previous Block
-        :return: <bool> True if correct, False if not.
+        last_proof: Previous Proof
+        proof: Current Proof
+        last_hash: The hash of the Previous Block
+        return: True if correct, False if not.
         """
 
         guess = f'{last_proof}{proof}{last_hash}'.encode()
@@ -242,7 +257,7 @@ def new_transaction():
     # Create a new Transaction
     index = blockchain.new_transaction(values['owner'], values['receiver'], values['amount'], values['gun_id'])
 
-    response = {'message': f'Transaction will be added to Block {index}'}
+    response = {'message': f'Transaction in queue to be added to Block {index}. Hit mine to record the transaction'}
     return jsonify(response), 201
 
 
@@ -276,15 +291,16 @@ def register_nodes():
 @app.route('/nodes/resolve', methods=['GET'])
 def consensus():
     replaced = blockchain.resolve_conflicts()
-
+    # If replaced display message
     if replaced:
         response = {
-            'message': 'Our chain was replaced',
+            'message': 'Current chain was replaced',
             'new_chain': blockchain.chain
         }
+    # Else maintain authority of current chain
     else:
         response = {
-            'message': 'Our chain is authoritative',
+            'message': 'Current chain is authoritative',
             'chain': blockchain.chain
         }
 
@@ -295,7 +311,11 @@ if __name__ == '__main__':
     from argparse import ArgumentParser
 
     parser = ArgumentParser()
-    parser.add_argument('-p', '--port', default=5001, type=int, help='port to listen on')
+    """
+    Change the port number in the parameter: default - to fire up different nodes in the same system.
+    The default port number is 5000
+    """
+    parser.add_argument('-p', '--port', default=5000, type=int, help='port to listen on')
     args = parser.parse_args()
     port = args.port
 
